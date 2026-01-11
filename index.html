@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Avery's Olaf Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            font-family: 'Comic Sans MS', 'Chalkboard', cursive, sans-serif;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F7FF 100%);
+            transition: background 0.5s ease;
+        }
+
+        /* Background snowflakes */
+        .bg-snowflake {
+            position: absolute;
+            color: white;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.15;
+            animation: float-bg 8s ease-in-out infinite;
+        }
+
+        @keyframes float-bg {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* Game area */
+        #game-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 80px;
+            overflow: hidden;
+            z-index: 5;
+        }
+
+        /* Olaf character */
+        #olaf {
+            position: absolute;
+            bottom: 0;
+            width: 120px;
+            height: auto;
+            z-index: 10;
+            transition: left 0.05s linear;
+            transform-origin: bottom center;
+        }
+
+        #olaf.hurt {
+            animation: hurt-shake 0.3s ease-out;
+            filter: brightness(1.5) saturate(0.5);
+        }
+
+        @keyframes hurt-shake {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            20% { transform: translateX(-10px) rotate(-5deg); }
+            40% { transform: translateX(10px) rotate(5deg); }
+            60% { transform: translateX(-10px) rotate(-3deg); }
+            80% { transform: translateX(5px) rotate(2deg); }
+        }
+
+        #olaf.melting {
+            animation: olaf-melt 2s ease-out forwards;
+        }
+
+        @keyframes olaf-melt {
+            0% {
+                transform: scaleY(1) scaleX(1);
+                filter: none;
+            }
+            30% {
+                transform: scaleY(0.7) scaleX(1.3);
+                filter: blur(1px);
+            }
+            60% {
+                transform: scaleY(0.4) scaleX(1.6);
+                filter: blur(2px);
+            }
+            100% {
+                transform: scaleY(0.1) scaleX(2);
+                filter: blur(4px);
+                opacity: 0.5;
+            }
+        }
+
+        #puddle {
+            position: absolute;
+            bottom: 0;
+            width: 200px;
+            height: 30px;
+            background: radial-gradient(ellipse, rgba(173,216,230,0.8) 0%, rgba(135,206,235,0.4) 70%, transparent 100%);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 1s ease;
+            z-index: 9;
+        }
+
+        #puddle.visible {
+            opacity: 1;
+        }
+
+        /* Falling items */
+        .falling-item {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .falling-item.princess {
+            width: 150px;
+            height: 150px;
+        }
+
+        .falling-item svg, .falling-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .falling-item.good {
+            animation: sparkle 0.5s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { filter: drop-shadow(0 0 8px #fff) drop-shadow(0 0 15px #87CEEB); }
+            50% { filter: drop-shadow(0 0 15px #fff) drop-shadow(0 0 25px #ADD8E6); }
+        }
+
+        .falling-item.bad {
+            animation: scary-pulse 0.2s ease-in-out infinite;
+        }
+
+        @keyframes scary-pulse {
+            0%, 100% { filter: drop-shadow(0 0 10px #FF4500); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 20px #FF0000) brightness(1.2); transform: scale(1.05); }
+        }
+
+        /* Screen shake */
+        #game-container.shake {
+            animation: screen-shake 0.4s ease-out;
+        }
+
+        @keyframes screen-shake {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-15px, -10px); }
+            20% { transform: translate(15px, 10px); }
+            30% { transform: translate(-10px, 5px); }
+            40% { transform: translate(10px, -5px); }
+            50% { transform: translate(-5px, 10px); }
+            60% { transform: translate(5px, -10px); }
+            70% { transform: translate(-3px, 3px); }
+            80% { transform: translate(3px, -3px); }
+            90% { transform: translate(-1px, 1px); }
+        }
+
+        /* Snowball display */
+        #snowball-display {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 20;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 30px;
+        }
+
+        .snowball-life {
+            width: 35px;
+            height: 35px;
+            background: radial-gradient(circle at 30% 30%, #FFFFFF, #E0E0E0);
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2), inset 0 -2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .snowball-life.gained {
+            animation: snowball-pop 0.4s ease-out;
+        }
+
+        @keyframes snowball-pop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .snowball-life.lost {
+            animation: snowball-melt 0.5s ease-out forwards;
+        }
+
+        @keyframes snowball-melt {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2) translateY(5px); opacity: 0.7; }
+            100% { transform: scale(0.5) translateY(15px); opacity: 0; }
+        }
+
+        /* Sparkle particles */
+        .sparkle-particle {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #FFD700 0%, #FFF 50%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 100;
+            animation: sparkle-burst 0.6s ease-out forwards;
+        }
+
+        @keyframes sparkle-burst {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--dx), var(--dy)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Screens */
+        .screen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .screen-overlay.hidden {
+            display: none;
+        }
+
+        .screen-content {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F7FF 100%);
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 90vw;
+        }
+
+        .screen-title {
+            font-size: 3rem;
+            color: #1a5276;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
+            margin-bottom: 20px;
+        }
+
+        .win-title {
+            font-size: 3.5rem;
+            color: #FFD700;
+            text-shadow: 3px 3px 6px #1a5276;
+            animation: win-bounce 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes win-bounce {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        .lose-title {
+            font-size: 3rem;
+            color: #5499C7;
+        }
+
+        .screen-message {
+            font-size: 1.5rem;
+            color: #2874A6;
+            margin: 20px 0;
+        }
+
+        .play-btn {
+            font-size: 2rem;
+            padding: 15px 50px;
+            background: linear-gradient(180deg, #58D68D 0%, #28B463 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+            margin-top: 20px;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .play-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Win screen characters */
+        .win-characters {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 0;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .win-olaf {
+            width: 280px;
+            height: auto;
+            animation: win-sway 2s ease-in-out infinite;
+            margin-right: -30px;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .win-avery {
+            width: 250px;
+            height: auto;
+            animation: win-sway 2s ease-in-out infinite 0.5s;
+        }
+
+        @keyframes win-sway {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+
+        /* Start screen */
+        .start-olaf {
+            width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+            animation: start-bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes start-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .start-instructions {
+            font-size: 1.2rem;
+            color: #2874A6;
+            margin: 15px 0;
+        }
+
+        /* Touch controls indicator */
+        .touch-zones {
+            position: absolute;
+            bottom: 100px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 15;
+        }
+
+        .touch-zones.visible {
+            opacity: 0.5;
+        }
+
+        .touch-zone {
+            font-size: 3rem;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG Definitions -->
+    <svg style="display:none">
+        <defs>
+            <!-- Snowflake -->
+            <symbol id="snowflake-svg" viewBox="0 0 100 100">
+                <g fill="none" stroke="#87CEEB" stroke-width="4" stroke-linecap="round">
+                    <line x1="50" y1="10" x2="50" y2="90"/>
+                    <line x1="10" y1="50" x2="90" y2="50"/>
+                    <line x1="22" y1="22" x2="78" y2="78"/>
+                    <line x1="78" y1="22" x2="22" y2="78"/>
+                    <line x1="50" y1="20" x2="40" y2="10"/>
+                    <line x1="50" y1="20" x2="60" y2="10"/>
+                    <line x1="50" y1="80" x2="40" y2="90"/>
+                    <line x1="50" y1="80" x2="60" y2="90"/>
+                    <line x1="20" y1="50" x2="10" y2="40"/>
+                    <line x1="20" y1="50" x2="10" y2="60"/>
+                    <line x1="80" y1="50" x2="90" y2="40"/>
+                    <line x1="80" y1="50" x2="90" y2="60"/>
+                </g>
+                <circle cx="50" cy="50" r="8" fill="#E0F7FF" stroke="#87CEEB" stroke-width="2"/>
+            </symbol>
+
+            <!-- Fire -->
+            <symbol id="fire-svg" viewBox="0 0 100 120">
+                <path d="M50 5 C20 40, 10 70, 20 95 C30 110, 70 110, 80 95 C90 70, 80 40, 50 5" fill="#FF6B35"/>
+                <path d="M50 25 C35 50, 25 70, 35 90 C42 100, 58 100, 65 90 C75 70, 65 50, 50 25" fill="#FFD93D"/>
+                <path d="M50 45 C42 60, 38 75, 45 85 C48 90, 52 90, 55 85 C62 75, 58 60, 50 45" fill="#FFF6E0"/>
+            </symbol>
+
+            <!-- Sun -->
+            <symbol id="sun-svg" viewBox="0 0 100 100">
+                <g fill="#FFD700">
+                    <polygon points="50,2 45,20 55,20"/>
+                    <polygon points="50,98 45,80 55,80"/>
+                    <polygon points="2,50 20,45 20,55"/>
+                    <polygon points="98,50 80,45 80,55"/>
+                    <polygon points="15,15 28,22 22,28"/>
+                    <polygon points="85,15 72,22 78,28"/>
+                    <polygon points="15,85 28,78 22,72"/>
+                    <polygon points="85,85 72,78 78,72"/>
+                </g>
+                <circle cx="50" cy="50" r="25" fill="#FFD700" stroke="#FFA500" stroke-width="3"/>
+                <ellipse cx="42" cy="45" rx="4" ry="5" fill="#8B0000"/>
+                <ellipse cx="58" cy="45" rx="4" ry="5" fill="#8B0000"/>
+                <path d="M38 60 Q50 70 62 60" stroke="#8B0000" stroke-width="3" fill="none"/>
+            </symbol>
+        </defs>
+    </svg>
+
+    <!-- Game Container -->
+    <div id="game-container">
+        <!-- Game Area -->
+        <div id="game-area">
+            <img id="olaf" src="olaf.png" alt="Olaf">
+            <div id="puddle"></div>
+        </div>
+
+        <!-- Touch control zones -->
+        <div class="touch-zones" id="touch-zones">
+            <span class="touch-zone">&#9664;</span>
+            <span class="touch-zone">&#9654;</span>
+        </div>
+
+        <!-- Snowball Display -->
+        <div id="snowball-display"></div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen-overlay">
+        <div class="screen-content">
+            <img src="olaf.png" alt="Olaf" class="start-olaf">
+            <h1 class="screen-title">AVERY'S OLAF ADVENTURE!</h1>
+            <p class="start-instructions">I LOVE snowflakes and Princess Avery! ❄️</p>
+            <p class="start-instructions">Can you help me catch them?</p>
+            <p class="start-instructions">Uh oh... fire and the sun make me melt!</p>
+            <button class="play-btn" onclick="startGame()">PLAY!</button>
+        </div>
+    </div>
+
+    <!-- Win Screen -->
+    <div id="win-screen" class="screen-overlay hidden">
+        <div class="screen-content">
+            <h1 class="win-title">YOU WIN!</h1>
+            <div class="win-characters">
+                <img src="olaf.png" alt="Olaf" class="win-olaf">
+                <img src="princess_avery.png" alt="Princess Avery" class="win-avery">
+            </div>
+            <p class="screen-message">Olaf and Princess Avery are best friends!</p>
+            <button class="play-btn" onclick="resetGame()">Play Again!</button>
+        </div>
+    </div>
+
+    <!-- Lose Screen -->
+    <div id="lose-screen" class="screen-overlay hidden">
+        <div class="screen-content">
+            <h1 class="lose-title">Oh No!</h1>
+            <p class="screen-message">Olaf melted...</p>
+            <p class="screen-message">But don't worry! Snow always comes back!</p>
+            <button class="play-btn" onclick="resetGame()">Try Again!</button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        const GameState = {
+            snowballs: 3,
+            isPlaying: false,
+            olafX: 0,
+            olafWidth: 120,
+            olafSpeed: 10,
+            movingLeft: false,
+            movingRight: false,
+            spawnInterval: null,
+            items: [],
+            spawnRate: 1500,
+            goodItemChance: 0.7,
+            winThreshold: 10,
+            gameLoopId: null
+        };
+
+        // Audio context for sounds
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playGoodSound() {
+            if (!audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+
+                // Magical sparkle sound - ascending notes
+                const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+                notes.forEach((freq, i) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.value = freq;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.15, now + i * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.2);
+                    osc.start(now + i * 0.08);
+                    osc.stop(now + i * 0.08 + 0.2);
+                });
+            } catch (e) {}
+        }
+
+        function playBadSound() {
+            if (!audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+
+                // Wobbly descending sound - friendly "melting"
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(150, now + 0.4);
+                osc.type = 'triangle';
+
+                // Add wobble
+                const lfo = audioCtx.createOscillator();
+                const lfoGain = audioCtx.createGain();
+                lfo.connect(lfoGain);
+                lfoGain.connect(osc.frequency);
+                lfo.frequency.value = 8;
+                lfoGain.gain.value = 30;
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+                lfo.start(now);
+                lfo.stop(now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } catch (e) {}
+        }
+
+        // Initialize game
+        function initGame() {
+            const gameArea = document.getElementById('game-area');
+            const containerWidth = gameArea.offsetWidth;
+
+            GameState.olafX = (containerWidth - GameState.olafWidth) / 2;
+
+            const olaf = document.getElementById('olaf');
+            olaf.style.left = GameState.olafX + 'px';
+            olaf.classList.remove('melting', 'hurt');
+
+            document.getElementById('puddle').classList.remove('visible');
+
+            updateSnowballDisplay();
+            updateBackgroundHeat();
+            createBackgroundSnowflakes();
+        }
+
+        // Create background snowflakes
+        function createBackgroundSnowflakes() {
+            const container = document.getElementById('game-container');
+            // Remove old ones
+            container.querySelectorAll('.bg-snowflake').forEach(f => f.remove());
+
+            for (let i = 0; i < 12; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'bg-snowflake';
+                flake.style.left = Math.random() * 100 + '%';
+                flake.style.top = Math.random() * 100 + '%';
+                flake.style.fontSize = (15 + Math.random() * 25) + 'px';
+                flake.style.animationDelay = Math.random() * 5 + 's';
+                flake.innerHTML = '\u2744';
+                container.appendChild(flake);
+            }
+        }
+
+        // Update background based on heat level
+        function updateBackgroundHeat() {
+            const heatLevel = Math.max(0, 1 - (GameState.snowballs / 5));
+            const r = Math.round(135 + (heatLevel * 100));
+            const g = Math.round(206 - (heatLevel * 80));
+            const b = Math.round(235 - (heatLevel * 100));
+
+            const container = document.getElementById('game-container');
+            container.style.background = `linear-gradient(180deg, rgb(${r},${g},${b}) 0%, #E0F7FF 100%)`;
+        }
+
+        // Update snowball display
+        function updateSnowballDisplay() {
+            const display = document.getElementById('snowball-display');
+
+            while (display.children.length < GameState.snowballs) {
+                const snowball = document.createElement('div');
+                snowball.className = 'snowball-life gained';
+                display.appendChild(snowball);
+                setTimeout(() => snowball.classList.remove('gained'), 400);
+            }
+
+            while (display.children.length > GameState.snowballs) {
+                const last = display.lastElementChild;
+                if (last) {
+                    last.classList.add('lost');
+                    setTimeout(() => {
+                        if (last.parentNode) last.remove();
+                    }, 500);
+                }
+                break;
+            }
+        }
+
+        // Keyboard controls
+        function setupKeyboardControls() {
+            document.addEventListener('keydown', (e) => {
+                if (!GameState.isPlaying) return;
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    GameState.movingLeft = true;
+                }
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    GameState.movingRight = true;
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    GameState.movingLeft = false;
+                }
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    GameState.movingRight = false;
+                }
+            });
+        }
+
+        // Touch controls
+        function setupTouchControls() {
+            const gameArea = document.getElementById('game-container');
+
+            gameArea.addEventListener('touchstart', handleTouchStart, { passive: false });
+            gameArea.addEventListener('touchend', handleTouchEnd, { passive: false });
+            gameArea.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+            // Show touch zones briefly on mobile
+            if ('ontouchstart' in window) {
+                const zones = document.getElementById('touch-zones');
+                zones.classList.add('visible');
+                setTimeout(() => zones.classList.remove('visible'), 2000);
+            }
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            if (!GameState.isPlaying) return;
+            initAudio();
+
+            const touch = e.touches[0];
+            const screenMid = window.innerWidth / 2;
+
+            if (touch.clientX < screenMid) {
+                GameState.movingLeft = true;
+                GameState.movingRight = false;
+            } else {
+                GameState.movingRight = true;
+                GameState.movingLeft = false;
+            }
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if (!GameState.isPlaying) return;
+
+            const touch = e.touches[0];
+            const screenMid = window.innerWidth / 2;
+
+            if (touch.clientX < screenMid) {
+                GameState.movingLeft = true;
+                GameState.movingRight = false;
+            } else {
+                GameState.movingRight = true;
+                GameState.movingLeft = false;
+            }
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            GameState.movingLeft = false;
+            GameState.movingRight = false;
+        }
+
+        // Update Olaf position
+        function updateOlafPosition() {
+            if (!GameState.isPlaying) return;
+
+            const gameArea = document.getElementById('game-area');
+            const maxX = gameArea.offsetWidth - GameState.olafWidth;
+
+            if (GameState.movingLeft) {
+                GameState.olafX = Math.max(0, GameState.olafX - GameState.olafSpeed);
+            }
+            if (GameState.movingRight) {
+                GameState.olafX = Math.min(maxX, GameState.olafX + GameState.olafSpeed);
+            }
+
+            document.getElementById('olaf').style.left = GameState.olafX + 'px';
+        }
+
+        // Item types
+        const ItemTypes = {
+            SNOWFLAKE: { type: 'good', svg: 'snowflake-svg' },
+            PRINCESS: { type: 'good', img: 'princess_avery.png' },
+            FIRE: { type: 'bad', svg: 'fire-svg' },
+            SUN: { type: 'bad', svg: 'sun-svg' }
+        };
+
+        // Spawn items
+        function spawnItem() {
+            if (!GameState.isPlaying) return;
+
+            const gameArea = document.getElementById('game-area');
+            const isGood = Math.random() < GameState.goodItemChance;
+
+            let itemType;
+            if (isGood) {
+                itemType = Math.random() < 0.7 ? ItemTypes.SNOWFLAKE : ItemTypes.PRINCESS;
+            } else {
+                itemType = Math.random() < 0.5 ? ItemTypes.FIRE : ItemTypes.SUN;
+            }
+
+            const item = document.createElement('div');
+            const isPrincess = itemType.img === 'princess_avery.png';
+            item.className = `falling-item ${itemType.type}${isPrincess ? ' princess' : ''}`;
+            item.dataset.type = itemType.type;
+
+            const itemSize = isPrincess ? 150 : 60;
+            const maxX = gameArea.offsetWidth - itemSize;
+            const startX = Math.random() * maxX;
+            item.style.left = startX + 'px';
+            item.style.top = '-70px';
+
+            if (itemType.svg) {
+                item.innerHTML = `<svg viewBox="0 0 100 ${itemType.svg === 'fire-svg' ? '120' : '100'}"><use href="#${itemType.svg}"/></svg>`;
+            } else {
+                item.innerHTML = `<img src="${itemType.img}" alt="Princess">`;
+            }
+
+            gameArea.appendChild(item);
+
+            // Animate falling
+            const duration = isGood ? 4500 : 2000;
+            const startTime = Date.now();
+            const endY = gameArea.offsetHeight + 70;
+
+            const itemData = {
+                element: item,
+                type: itemType.type,
+                startTime,
+                duration,
+                startX,
+                endY,
+                startY: -70
+            };
+
+            GameState.items.push(itemData);
+        }
+
+        // Update items
+        function updateItems() {
+            const gameArea = document.getElementById('game-area');
+            const now = Date.now();
+
+            for (let i = GameState.items.length - 1; i >= 0; i--) {
+                const item = GameState.items[i];
+                const elapsed = now - item.startTime;
+                const progress = Math.min(elapsed / item.duration, 1);
+
+                const currentY = item.startY + (item.endY - item.startY) * progress;
+                item.element.style.top = currentY + 'px';
+
+                // Add slight horizontal sway for good items
+                if (item.type === 'good') {
+                    const sway = Math.sin(elapsed / 300) * 15;
+                    item.element.style.left = (item.startX + sway) + 'px';
+                }
+
+                if (progress >= 1) {
+                    item.element.remove();
+                    GameState.items.splice(i, 1);
+                }
+            }
+        }
+
+        // Check collisions
+        function checkCollisions() {
+            if (!GameState.isPlaying) return;
+
+            const olaf = document.getElementById('olaf');
+            const olafRect = olaf.getBoundingClientRect();
+
+            // Generous hitbox for catching, smaller for avoiding
+            const catchBox = {
+                left: olafRect.left - 10,
+                right: olafRect.right + 10,
+                top: olafRect.top,
+                bottom: olafRect.bottom
+            };
+
+            const avoidBox = {
+                left: olafRect.left + 30,
+                right: olafRect.right - 30,
+                top: olafRect.top + 20,
+                bottom: olafRect.bottom - 20
+            };
+
+            for (let i = GameState.items.length - 1; i >= 0; i--) {
+                const item = GameState.items[i];
+                const itemRect = item.element.getBoundingClientRect();
+
+                const hitbox = item.type === 'good' ? catchBox : avoidBox;
+
+                if (itemRect.left < hitbox.right &&
+                    itemRect.right > hitbox.left &&
+                    itemRect.top < hitbox.bottom &&
+                    itemRect.bottom > hitbox.top) {
+
+                    item.element.remove();
+                    GameState.items.splice(i, 1);
+
+                    if (item.type === 'good') {
+                        onGoodCatch(itemRect);
+                    } else {
+                        onBadHit();
+                    }
+                }
+            }
+        }
+
+        // Good item caught
+        function onGoodCatch(itemRect) {
+            GameState.snowballs = Math.min(GameState.winThreshold, GameState.snowballs + 1);
+            updateSnowballDisplay();
+            updateBackgroundHeat();
+            playGoodSound();
+            createSparkleExplosion(itemRect);
+
+            if (GameState.snowballs >= GameState.winThreshold) {
+                triggerWin();
+            }
+        }
+
+        // Create sparkle explosion
+        function createSparkleExplosion(rect) {
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            for (let i = 0; i < 12; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle-particle';
+                sparkle.style.left = centerX + 'px';
+                sparkle.style.top = centerY + 'px';
+
+                const angle = (i / 12) * Math.PI * 2;
+                const distance = 40 + Math.random() * 40;
+                sparkle.style.setProperty('--dx', Math.cos(angle) * distance + 'px');
+                sparkle.style.setProperty('--dy', Math.sin(angle) * distance + 'px');
+
+                document.body.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 600);
+            }
+        }
+
+        // Bad item hit
+        function onBadHit() {
+            GameState.snowballs = Math.max(0, GameState.snowballs - 1);
+            updateSnowballDisplay();
+            updateBackgroundHeat();
+            playBadSound();
+            triggerScreenShake();
+            triggerOlafHurt();
+
+            if (GameState.snowballs <= 0) {
+                triggerLose();
+            }
+        }
+
+        function triggerScreenShake() {
+            const container = document.getElementById('game-container');
+            container.classList.add('shake');
+            setTimeout(() => container.classList.remove('shake'), 400);
+        }
+
+        function triggerOlafHurt() {
+            const olaf = document.getElementById('olaf');
+            olaf.classList.add('hurt');
+            setTimeout(() => olaf.classList.remove('hurt'), 300);
+        }
+
+        // Win!
+        function triggerWin() {
+            GameState.isPlaying = false;
+            clearInterval(GameState.spawnInterval);
+
+            GameState.items.forEach(item => item.element.remove());
+            GameState.items = [];
+
+            setTimeout(() => {
+                document.getElementById('win-screen').classList.remove('hidden');
+            }, 500);
+        }
+
+        // Lose
+        function triggerLose() {
+            GameState.isPlaying = false;
+            clearInterval(GameState.spawnInterval);
+
+            GameState.items.forEach(item => item.element.remove());
+            GameState.items = [];
+
+            const olaf = document.getElementById('olaf');
+            olaf.classList.add('melting');
+
+            const puddle = document.getElementById('puddle');
+            puddle.style.left = (GameState.olafX - 40) + 'px';
+
+            setTimeout(() => {
+                puddle.classList.add('visible');
+            }, 1000);
+
+            setTimeout(() => {
+                document.getElementById('lose-screen').classList.remove('hidden');
+            }, 2500);
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!GameState.isPlaying) return;
+
+            updateOlafPosition();
+            updateItems();
+            checkCollisions();
+
+            GameState.gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        // Start game
+        function startGame() {
+            initAudio();
+            GameState.isPlaying = true;
+            GameState.snowballs = 3;
+
+            document.getElementById('start-screen').classList.add('hidden');
+
+            initGame();
+
+            GameState.spawnInterval = setInterval(spawnItem, GameState.spawnRate);
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Reset game
+        function resetGame() {
+            GameState.isPlaying = false;
+            GameState.snowballs = 3;
+            GameState.movingLeft = false;
+            GameState.movingRight = false;
+
+            clearInterval(GameState.spawnInterval);
+            cancelAnimationFrame(GameState.gameLoopId);
+
+            GameState.items.forEach(item => item.element.remove());
+            GameState.items = [];
+
+            document.getElementById('win-screen').classList.add('hidden');
+            document.getElementById('lose-screen').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+
+            const olaf = document.getElementById('olaf');
+            olaf.classList.remove('melting', 'hurt');
+
+            document.getElementById('puddle').classList.remove('visible');
+            document.getElementById('snowball-display').innerHTML = '';
+
+            initGame();
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            setupKeyboardControls();
+            setupTouchControls();
+            initGame();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (GameState.isPlaying) {
+                const gameArea = document.getElementById('game-area');
+                const maxX = gameArea.offsetWidth - GameState.olafWidth;
+                GameState.olafX = Math.min(GameState.olafX, maxX);
+                document.getElementById('olaf').style.left = GameState.olafX + 'px';
+            }
+        });
+    </script>
+</body>
+</html>
