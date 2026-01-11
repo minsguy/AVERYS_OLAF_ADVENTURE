@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Avery's Olaf Adventure</title>
     <style>
         * {
@@ -178,6 +178,7 @@
         #snowball-display {
             position: absolute;
             bottom: 15px;
+            bottom: calc(15px + env(safe-area-inset-bottom, 0px));
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -395,6 +396,18 @@
             font-size: 3rem;
             color: white;
             text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Tablet responsive */
+        @media (max-width: 1024px) and (min-width: 601px) {
+            #snowball-display {
+                bottom: 20px;
+                bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+            }
+
+            #game-area {
+                bottom: 90px;
+            }
         }
 
         /* Mobile responsive */
