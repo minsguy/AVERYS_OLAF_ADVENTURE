@@ -2,18 +2,22 @@
 
 A simple HTML5 browser game made for a 4-year-old. Olaf catches snowflakes and Princess Avery while avoiding fire and sun.
 
+## Live Site
+https://minsguy.github.io/AVERYS_OLAF_ADVENTURE/
+
 ## How to Play
-- Open `index.html` in any browser (double-click)
+- Open `index.html` in any browser (double-click) or visit the live site
 - Move Olaf left/right with arrow keys (or WASD), or tap left/right side on touch devices
 - Catch snowflakes and Princess Avery (good items) - they float down slowly with sparkles
 - Avoid fire and sun (bad items) - they fall fast with scary glow
 - Start with 3 snowballs, win at 10, lose at 0
 
 ## Tech Stack
-- Single `index.html` file (~1000 lines) containing all HTML, CSS, and JavaScript
+- Single `index.html` file (~1100 lines) containing all HTML, CSS, and JavaScript
 - No dependencies or build process
 - Web Audio API for sound effects (no audio files needed)
 - SVG graphics for snowflake, fire, and sun (embedded inline)
+- Responsive design with media queries for mobile/tablet/desktop
 
 ## Key Files
 - `index.html` - The entire game
@@ -39,3 +43,13 @@ A simple HTML5 browser game made for a 4-year-old. Olaf catches snowflakes and P
 - "I LOVE snowflakes and Princess Avery! ❄️"
 - "Can you help me catch them?"
 - "Uh oh... fire and the sun make me melt!"
+
+## Responsive Breakpoints
+- **Desktop**: Default styles
+- **Tablet** (601-1024px): Adjusted snowball display positioning
+- **Mobile** (<600px): Smaller fonts, images, and game elements
+
+## Deployment
+- Hosted on GitHub Pages
+- Repo: https://github.com/minsguy/AVERYS_OLAF_ADVENTURE
+- Auto-deploys on push to main branch
