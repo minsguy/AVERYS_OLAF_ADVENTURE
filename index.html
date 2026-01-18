@@ -373,6 +373,93 @@
             margin: 15px 0;
         }
 
+        /* Difficulty Selector */
+        .difficulty-section {
+            margin: 25px 0;
+        }
+
+        .difficulty-label {
+            font-size: 1.3rem;
+            color: #1a5276;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .difficulty-btn {
+            padding: 12px 18px;
+            border: 3px solid transparent;
+            border-radius: 15px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            min-width: 110px;
+            text-align: center;
+        }
+
+        .difficulty-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .difficulty-btn.selected {
+            border-color: #1a5276;
+            box-shadow: 0 0 15px rgba(26, 82, 118, 0.4);
+            transform: scale(1.05);
+        }
+
+        .difficulty-btn .diff-icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .difficulty-btn .diff-name {
+            display: block;
+            font-size: 0.95rem;
+        }
+
+        .difficulty-btn .diff-level {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: normal;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        /* Warm Hugs - Easy (light blue, friendly) */
+        .diff-easy {
+            background: linear-gradient(180deg, #AED6F1 0%, #85C1E9 100%);
+            color: #1a5276;
+        }
+
+        /* Let It Go - Normal (ice blue) */
+        .diff-normal {
+            background: linear-gradient(180deg, #85C1E9 0%, #5DADE2 100%);
+            color: #154360;
+        }
+
+        /* Frozen Heart - Hard (deep blue) */
+        .diff-hard {
+            background: linear-gradient(180deg, #5DADE2 0%, #2E86C1 100%);
+            color: #fff;
+        }
+
+        /* Elsa's Fury - Insane (purple/stormy) */
+        .diff-insane {
+            background: linear-gradient(180deg, #8E44AD 0%, #6C3483 100%);
+            color: #fff;
+        }
+
         /* Touch controls indicator */
         .touch-zones {
             position: absolute;
@@ -442,6 +529,38 @@
             .start-olaf {
                 width: 120px;
                 margin-bottom: 10px;
+            }
+
+            .difficulty-section {
+                margin: 15px 0;
+            }
+
+            .difficulty-label {
+                font-size: 1.1rem;
+                margin-bottom: 10px;
+            }
+
+            .difficulty-selector {
+                gap: 8px;
+            }
+
+            .difficulty-btn {
+                padding: 8px 12px;
+                min-width: 75px;
+                font-size: 0.85rem;
+            }
+
+            .difficulty-btn .diff-icon {
+                font-size: 1.2rem;
+                margin-bottom: 3px;
+            }
+
+            .difficulty-btn .diff-name {
+                font-size: 0.75rem;
+            }
+
+            .difficulty-btn .diff-level {
+                font-size: 0.6rem;
             }
 
             .win-olaf {
@@ -555,6 +674,33 @@
             <p class="start-instructions">I LOVE snowflakes and Princess Avery! ❄️</p>
             <p class="start-instructions">Can you help me catch them?</p>
             <p class="start-instructions">Uh oh... fire and the sun make me melt!</p>
+
+            <div class="difficulty-section">
+                <p class="difficulty-label">Choose Your Adventure:</p>
+                <div class="difficulty-selector">
+                    <button class="difficulty-btn diff-easy selected" data-difficulty="easy" onclick="selectDifficulty('easy')">
+                        <span class="diff-icon">🤗</span>
+                        <span class="diff-name">Warm Hugs</span>
+                        <span class="diff-level">(Easy)</span>
+                    </button>
+                    <button class="difficulty-btn diff-normal" data-difficulty="normal" onclick="selectDifficulty('normal')">
+                        <span class="diff-icon">❄️</span>
+                        <span class="diff-name">Let It Go</span>
+                        <span class="diff-level">(Medium)</span>
+                    </button>
+                    <button class="difficulty-btn diff-hard" data-difficulty="hard" onclick="selectDifficulty('hard')">
+                        <span class="diff-icon">💙</span>
+                        <span class="diff-name">Frozen Heart</span>
+                        <span class="diff-level">(Hard)</span>
+                    </button>
+                    <button class="difficulty-btn diff-insane" data-difficulty="insane" onclick="selectDifficulty('insane')">
+                        <span class="diff-icon">🌪️</span>
+                        <span class="diff-name">Elsa's Fury</span>
+                        <span class="diff-level">(Insane)</span>
+                    </button>
+                </div>
+            </div>
+
             <button class="play-btn" onclick="startGame()">PLAY!</button>
         </div>
     </div>
@@ -583,6 +729,49 @@
     </div>
 
     <script>
+        // Difficulty Presets
+        const DifficultyPresets = {
+            easy: {
+                name: 'Warm Hugs',
+                goodItemChance: 0.8,      // 80% good items
+                spawnRate: 1800,          // Slower spawning
+                goodItemDuration: 5000,   // Slower fall
+                badItemDuration: 2500,    // Slower fall
+                startingSnowballs: 4,
+                winThreshold: 8
+            },
+            normal: {
+                name: 'Let It Go',
+                goodItemChance: 0.7,      // 70% good items
+                spawnRate: 1500,
+                goodItemDuration: 4500,
+                badItemDuration: 2000,
+                startingSnowballs: 3,
+                winThreshold: 10
+            },
+            hard: {
+                name: 'Frozen Heart',
+                goodItemChance: 0.5,      // 50% good items
+                spawnRate: 1200,          // Faster spawning
+                goodItemDuration: 3500,   // Faster fall
+                badItemDuration: 1500,    // Faster fall
+                startingSnowballs: 3,
+                winThreshold: 12
+            },
+            insane: {
+                name: "Elsa's Fury",
+                goodItemChance: 0.35,     // 35% good items
+                spawnRate: 900,           // Much faster spawning
+                goodItemDuration: 2500,   // Much faster fall
+                badItemDuration: 1200,    // Very fast fall
+                startingSnowballs: 2,
+                winThreshold: 15
+            }
+        };
+
+        // Currently selected difficulty
+        let selectedDifficulty = 'easy';
+
         // Game State
         const GameState = {
             snowballs: 3,
@@ -596,9 +785,37 @@
             items: [],
             spawnRate: 1500,
             goodItemChance: 0.7,
+            goodItemDuration: 4500,
+            badItemDuration: 2000,
             winThreshold: 10,
             gameLoopId: null
         };
+
+        // Select difficulty
+        function selectDifficulty(difficulty) {
+            selectedDifficulty = difficulty;
+
+            // Update button states
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.querySelector(`[data-difficulty="${difficulty}"]`).classList.add('selected');
+
+            // Save preference
+            try {
+                localStorage.setItem('olafDifficulty', difficulty);
+            } catch (e) {}
+        }
+
+        // Load saved difficulty preference
+        function loadDifficultyPreference() {
+            try {
+                const saved = localStorage.getItem('olafDifficulty');
+                if (saved && DifficultyPresets[saved]) {
+                    selectDifficulty(saved);
+                }
+            } catch (e) {}
+        }
 
         // Audio context for sounds
         let audioCtx = null;
@@ -868,8 +1085,8 @@
 
             gameArea.appendChild(item);
 
-            // Animate falling
-            const duration = isGood ? 4500 : 2000;
+            // Animate falling - use dynamic durations from difficulty settings
+            const duration = isGood ? GameState.goodItemDuration : GameState.badItemDuration;
             const startTime = Date.now();
             const endY = gameArea.offsetHeight + 70;
 
@@ -1067,8 +1284,17 @@
         // Start game
         function startGame() {
             initAudio();
+
+            // Apply difficulty settings
+            const difficulty = DifficultyPresets[selectedDifficulty];
+            GameState.goodItemChance = difficulty.goodItemChance;
+            GameState.spawnRate = difficulty.spawnRate;
+            GameState.goodItemDuration = difficulty.goodItemDuration;
+            GameState.badItemDuration = difficulty.badItemDuration;
+            GameState.winThreshold = difficulty.winThreshold;
+            GameState.snowballs = difficulty.startingSnowballs;
+
             GameState.isPlaying = true;
-            GameState.snowballs = 3;
 
             document.getElementById('start-screen').classList.add('hidden');
 
@@ -1081,7 +1307,7 @@
         // Reset game
         function resetGame() {
             GameState.isPlaying = false;
-            GameState.snowballs = 3;
+            GameState.snowballs = DifficultyPresets[selectedDifficulty].startingSnowballs;
             GameState.movingLeft = false;
             GameState.movingRight = false;
 
@@ -1106,6 +1332,7 @@
 
         // Initialize on load
         window.addEventListener('load', () => {
+            loadDifficultyPreference();
             setupKeyboardControls();
             setupTouchControls();
             initGame();
